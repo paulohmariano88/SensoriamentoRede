@@ -28,6 +28,8 @@ Banco de dados para armazenar os dados medidos de latÊncia
 Dependencia para o projeto API:
 
     go get github.com/gin-gonic/gin
-
-
 */
+
+JWT para validação de segurança
+
+go get github.com/golang-jwt/jwt/v5
