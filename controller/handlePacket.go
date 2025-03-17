@@ -3,35 +3,44 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"networksensor/model"
+	"networksensor/util"
+
 	"github.com/google/gopacket/pcap"
 )
 
+func HandleGetPackets(w http.ResponseWriter, r *http.Request) {
 
+	// Adicionando os cabeçalhos de CORS apenas nesta função
+	w.Header().Set("Access-Control-Allow-Origin", "*") // Permite acesso de qualquer origem
+	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
-func HandleGetPackets(w http.ResponseWriter, r *http.Request){
+	// Se a requisição for OPTIONS, apenas retorna 200 OK e encerra
+	if r.Method == "OPTIONS" {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
 
+	// Buscar os pacotes no banco
 	packets, err := model.FindAllPackets()
 	if err != nil {
 		http.Error(w, "Erro ao buscar os pacotes", http.StatusInternalServerError)
 		return
 	}
 
-	//Definição do cabeçalho para JSON
+	// Definição do cabeçalho para JSON
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-
-	//Codificar e Enviar os pacotes como JSON
+	// Codificar e Enviar os pacotes como JSON
 	json.NewEncoder(w).Encode(packets)
 }
 
-
 func StartScan(w http.ResponseWriter, r *http.Request) {
 
-  	var request model.Interface
+	var request model.Interface
 
 	err := json.NewDecoder(r.Body).Decode(&request)
 
@@ -39,30 +48,30 @@ func StartScan(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Erro ao ler JSON", http.StatusBadRequest)
 		return
 	}
-	
+
 	fmt.Print("Iniciando sensor de rede")
 	model.StartMeasure(request.NameInterface)
 }
 
-
-func ListAllInterfaces(w http.ResponseWriter, r *http.Request){
+func ListAllInterfaces(w http.ResponseWriter, r *http.Request) {
 
 	devices, err := pcap.FindAllDevs()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Erro ao buscar as interfaces: ", err)
+		http.Error(w, "Erro ao ler JSON: ", http.StatusInternalServerError)
 	}
 
-	var data []any 
+	var data []any
 
 	fmt.Println("Interfaces disponiveis")
 	for _, device := range devices {
 		fmt.Printf("- Nome:%s\n", device.Name)
 		fmt.Printf(" Descrição: %s\n", device.Description)
-	    it := model.Interface{
+		it := model.Interface{
 			NameInterface: device.Name,
-			Description: device.Description,
+			Description:   device.Description,
 			//IpRelational: device.Addresses,
-		}		
+		}
 
 		data = append(data, it)
 
@@ -74,17 +83,54 @@ func ListAllInterfaces(w http.ResponseWriter, r *http.Request){
 		}
 	}
 
-		//Definição do cabeçalho para JSON
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-	
-		//Codificar e Enviar os pacotes como JSON
-		json.NewEncoder(w).Encode(data)
+	//Definição do cabeçalho para JSON
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
+	//Codificar e Enviar os pacotes como JSON
+	json.NewEncoder(w).Encode(data)
 }
 
-func CancelMeasure(w http.ResponseWriter, r *http.Request){
 
+func CancelMeasure(w http.ResponseWriter, r *http.Request) {
 	model.StopMeasure()
+}
+
+
+func GetMeasureByDate(w http.ResponseWriter, r *http.Request) {
+
+	w.Header().Set("Content-Type", "application/json")
+
+	beginStr := r.URL.Query().Get("begin")
+	endStr := r.URL.Query().Get("end")
+
+	//Validar os parametros foram passados
+	if beginStr == "" || endStr == "" {
+		http.Error(w, "Parâmetros begin e end são obrigatórios", http.StatusBadRequest)
+		return
+	}
+
+	begin, err := util.ConverterData(beginStr)
+	if err != nil {
+		http.Error(w, "Formato de data inválido para Begin", http.StatusBadRequest)
+		return
+	}
+
+	end, err := util.ConverterData(endStr)
+
+	if err != nil {
+		http.Error(w, "Formato de data inválido para End", http.StatusBadRequest)
+		return
+	}
+
+	//Buscar os pacotes no banco
+	packet, err := model.GetMeasureByDate(begin, end)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Erro ao buscar os pacotes: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	//Responder com JSON
+	json.NewEncoder(w).Encode(packet)
 
 }

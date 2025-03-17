@@ -5,12 +5,19 @@ Sistema de captura de pacotes para medição da performance de rede.
 Medir a latência para comparação em diferentes tipos de recursos de comunicação.
 
 /*
+
+Instalar o NCAP
+
+    https://npcap.com/ 
+
+*/
+
+
+/*
 PCAP para captura dos pacotes
 
 	go get -u github.com/google/gopacket
 	go get -u github.com/google/gopacket/pcap
-
-
 
 */
 
@@ -30,6 +37,15 @@ Dependencia para o projeto API:
     go get github.com/gin-gonic/gin
 */
 
-JWT para validação de segurança
+    JWT para validação de segurança
 
-go get github.com/golang-jwt/jwt/v5
+    go get github.com/golang-jwt/jwt/v5
+
+
+/* Gerando o Executável
+
+    go build -o networksensor.exe main.go
+
+*/
+
+
