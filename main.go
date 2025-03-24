@@ -9,13 +9,15 @@ import (
 
 func main() {
 
-	http.HandleFunc("/api/login", controller.LoginHandler) //EndPoint para obter JWT
-
-	http.HandleFunc("/api/getpackets", controller.HandleGetPackets)                                 //Busca os pacotes no banco
-	http.HandleFunc("/api/startscan", middleware.JWTMiddleware(controller.StartScan))               //Inicia o scan e armazena no banco
-	http.HandleFunc("/api/stopscan", middleware.JWTMiddleware(controller.CancelMeasure))            //Parar o scan
-	http.HandleFunc("/api/listinterface", middleware.JWTMiddleware(controller.ListAllInterfaces))   // Listar as interfaces de rede
-	http.HandleFunc("/api/getpacketsbydate", middleware.JWTMiddleware(controller.GetMeasureByDate)) //Buscar os dados pela data
+	// Envolvendo todas as rotas com o middleware de CORS
+	http.Handle("/api/login", middleware.CORSMiddleware(http.HandlerFunc(controller.LoginHandler)))
+	http.Handle("/api/saveUser", middleware.CORSMiddleware(http.HandlerFunc(controller.SaveUserHandler)))
+	http.Handle("/api/getUsers", middleware.CORSMiddleware(middleware.JWTMiddleware(http.HandlerFunc(controller.GetUsersHandler))))
+	http.Handle("/api/getpackets", middleware.CORSMiddleware(middleware.JWTMiddleware(http.HandlerFunc(controller.HandleGetPackets))))
+	http.Handle("/api/startscan", middleware.CORSMiddleware(middleware.JWTMiddleware(http.HandlerFunc(controller.StartScan))))
+	http.Handle("/api/stopscan", middleware.CORSMiddleware(middleware.JWTMiddleware(http.HandlerFunc(controller.CancelMeasure))))
+	http.Handle("/api/listinterface", middleware.CORSMiddleware(middleware.JWTMiddleware(http.HandlerFunc(controller.ListAllInterfaces))))
+	http.Handle("/api/getpacketsbydate", middleware.CORSMiddleware(middleware.JWTMiddleware(http.HandlerFunc(controller.GetMeasureByDate))))
 
 	port := ":8383"
 	fmt.Println("servidor rodando em http:IP:" + port)

@@ -12,16 +12,6 @@ import (
 
 func HandleGetPackets(w http.ResponseWriter, r *http.Request) {
 
-	// Adicionando os cabeçalhos de CORS apenas nesta função
-	w.Header().Set("Access-Control-Allow-Origin", "*") // Permite acesso de qualquer origem
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-	// Se a requisição for OPTIONS, apenas retorna 200 OK e encerra
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
 
 	// Buscar os pacotes no banco
 	packets, err := model.FindAllPackets()
@@ -54,6 +44,8 @@ func StartScan(w http.ResponseWriter, r *http.Request) {
 }
 
 func ListAllInterfaces(w http.ResponseWriter, r *http.Request) {
+
+
 
 	devices, err := pcap.FindAllDevs()
 	if err != nil {
@@ -91,15 +83,12 @@ func ListAllInterfaces(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
-
 func CancelMeasure(w http.ResponseWriter, r *http.Request) {
 	model.StopMeasure()
 }
 
-
 func GetMeasureByDate(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
 
 	beginStr := r.URL.Query().Get("begin")
 	endStr := r.URL.Query().Get("end")
